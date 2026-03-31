@@ -1,0 +1,39 @@
+# Data
+data/raw/
+data/processed/
+*.csv
+*.parquet
+
+# Models
+models/
+*.pt
+*.bin
+*.safetensors
+
+# MLflow
+mlruns/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment
+.env
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/

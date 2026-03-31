@@ -1,0 +1,43 @@
+project:
+  name: clinical-text-classifier
+  version: 0.1.0
+  seed: 42
+
+data:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  dataset_name: mtsamples  # tobiasbueschel/medical-transcriptions on Kaggle
+  test_size: 0.15
+  val_size: 0.15
+  min_class_samples: 50  # drop specialties with fewer samples
+
+preprocessing:
+  max_length: 512
+  lowercase: true
+  remove_stopwords: false  # clinical stopwords differ from general
+  min_doc_length: 20  # tokens
+
+baseline:
+  model: logistic_regression
+  tfidf:
+    max_features: 20000
+    ngram_range: [1, 2]
+    sublinear_tf: true
+
+transformer:
+  model_name: emilyalsentzer/Bio_ClinicalBERT
+  max_length: 512
+  batch_size: 16
+  learning_rate: 2.0e-5
+  epochs: 5
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.1
+    target_modules: ["query", "value"]
+
+mlflow:
+  experiment_name: clinical-text-classifier
+  tracking_uri: mlruns
