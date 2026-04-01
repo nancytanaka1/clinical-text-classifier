@@ -22,10 +22,12 @@ variables:
     default: 0
   data_path:
     default: /Volumes/dev/clinical_nlp/raw/mtsamples.csv
+  config_path:
+    default: /Workspace/Users/${workspace.current_user.userName}/.bundle/clinical-text-classifier/${bundle.target}/files/configs/config.yaml
   clean_output_path:
-    default: /Workspace/Repos/nguyenn.mail@gmail.com/clinical-text-classifier/data/clean/clinical_notes_clean.parquet
+    default: /dbfs/FileStore/clinical_text/clean/clinical_notes_clean.parquet
   train_ready_output_path:
-    default: /Workspace/Repos/nguyenn.mail@gmail.com/clinical-text-classifier/data/train_ready/clinical_text_train_ready.parquet
+    default: /dbfs/FileStore/clinical_text/train_ready/clinical_text_train_ready.parquet
   experiment_name:
     default: /Users/${workspace.current_user.userName}/clinical-text-dev
   log_level:
@@ -63,7 +65,7 @@ resources:
           notebook_task:
             notebook_path: ./notebooks/02_create_clean_dataset.py
             base_parameters:
-              config_path: configs/config.yaml
+              config_path: ${var.config_path}
               input_path: ${var.data_path}
               output_path: ${var.clean_output_path}
           new_cluster:
@@ -82,7 +84,7 @@ resources:
           notebook_task:
             notebook_path: ./notebooks/03_create_train_ready_dataset.py
             base_parameters:
-              config_path: configs/config.yaml
+              config_path: ${var.config_path}
               input_path: ${var.clean_output_path}
               output_path: ${var.train_ready_output_path}
           new_cluster:
