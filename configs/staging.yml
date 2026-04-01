@@ -1,0 +1,23 @@
+﻿# configs/staging.yml — Staging environment overrides
+resources:
+  jobs:
+    eda_job:
+      schedule:
+        pause_status: PAUSED
+    training_job:
+      schedule:
+        quartz_cron_expression: "0 0 2 * * ?"
+        timezone_id: America/Los_Angeles
+        pause_status: UNPAUSED
+    test_job:
+      schedule:
+        quartz_cron_expression: "0 0 1 * * ?"
+        timezone_id: America/Los_Angeles
+        pause_status: UNPAUSED
+
+variables:
+  node_type: Standard_D4ds_v4
+  autotermination_minutes: 30
+  max_workers: 0
+  unity_catalog: staging
+  schema: clinical_nlp

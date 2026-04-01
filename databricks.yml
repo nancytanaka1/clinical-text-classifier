@@ -1,0 +1,86 @@
+﻿# Databricks Asset Bundle (DAB) configuration
+bundle:
+  name: clinical-text-classifier
+
+include:
+  - configs/*.yml
+
+workspace:
+  auth_type: azure-cli
+
+resources:
+  jobs:
+    eda_job:
+      name: "[${bundle.target}] Clinical Text EDA"
+      tasks:
+        - task_key: run_eda
+          notebook_task:
+            notebook_path: ./notebooks/01_eda.py
+          new_cluster:
+            spark_version: "17.3.x-ml-scala2.13"
+            node_type_id: Standard_D4ds_v4
+            num_workers: 0
+            spark_conf:
+              spark.master: "local[*]"
+              spark.databricks.cluster.profile: singleNode
+            custom_tags:
+              ResourceClass: SingleNode
+
+    training_job:
+      name: "[${bundle.target}] Clinical Text Training"
+      tasks:
+        - task_key: preprocess
+          notebook_task:
+            notebook_path: ./notebooks/02_preprocessing.py
+        - task_key: train
+          depends_on:
+            - task_key: preprocess
+          notebook_task:
+            notebook_path: ./notebooks/03_train.py
+          new_cluster:
+            spark_version: "17.3.x-ml-scala2.13"
+            node_type_id: Standard_D4ds_v4
+            num_workers: 0
+            spark_conf:
+              spark.master: "local[*]"
+              spark.databricks.cluster.profile: singleNode
+            custom_tags:
+              ResourceClass: SingleNode
+
+    test_job:
+      name: "[${bundle.target}] Clinical Text Tests"
+      tasks:
+        - task_key: unit_tests
+          notebook_task:
+            notebook_path: ./tests/run_tests.py
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-7405604639205301.1.azuredatabricks.net
+    variables:
+      data_path: /Volumes/dev/clinical_nlp/raw/mtsamples.csv
+      experiment_name: /Users/${workspace.current_user.userName}/clinical-text-dev
+      log_level: DEBUG
+
+  staging:
+    workspace:
+      host: https://adb-7405604639205301.1.azuredatabricks.net
+    variables:
+      data_path: /Volumes/staging/clinical_nlp/raw/mtsamples.csv
+      experiment_name: /Shared/clinical-text-staging
+      log_level: INFO
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-7405604639205301.1.azuredatabricks.net
+      root_path: /Shared/.bundle/prod/${bundle.name}
+    run_as:
+      service_principal_name: clinical-nlp-sp
+    variables:
+      data_path: /Volumes/prod/clinical_nlp/raw/mtsamples.csv
+      experiment_name: /Shared/clinical-text-prod
+      log_level: WARNING
