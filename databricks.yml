@@ -22,6 +22,8 @@ variables:
     default: 0
   data_path:
     default: /Volumes/dev/clinical_nlp/raw/mtsamples.csv
+  clean_output_path:
+    default: /Workspace/Repos/nguyenn.mail@gmail.com/clinical-text-classifier/data/clean/clinical_notes_clean.parquet
   experiment_name:
     default: /Users/${workspace.current_user.userName}/clinical-text-dev
   log_level:
@@ -55,14 +57,13 @@ resources:
     prepare_data_job:
       name: "[${bundle.target}] Clinical Text Prepare Data"
       tasks:
-        - task_key: prepare_data
-          python_wheel_task:
-            package_name: clinical-text-classifier
-            entry_point: clinical-prepare-data
-            named_parameters:
-              config: configs/config.yaml
-          libraries:
-            - whl: ./dist/*.whl
+        - task_key: create_clean_dataset
+          notebook_task:
+            notebook_path: ./notebooks/02_create_clean_dataset.py
+            base_parameters:
+              config_path: configs/config.yaml
+              input_path: ${var.data_path}
+              output_path: ${var.clean_output_path}
           new_cluster:
             spark_version: "17.3.x-cpu-ml-scala2.13"
             node_type_id: ${var.node_type}
