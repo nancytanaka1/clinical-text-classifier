@@ -4,6 +4,9 @@ resources:
     eda_job:
       schedule:
         pause_status: PAUSED
+    prepare_data_job:
+      schedule:
+        pause_status: PAUSED
     training_job:
       schedule:
         pause_status: PAUSED

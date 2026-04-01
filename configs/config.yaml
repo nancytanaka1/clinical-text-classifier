@@ -2,10 +2,14 @@ project:
   name: clinical-text-classifier
   version: 0.1.0
   seed: 42
+  owner: clinical-nlp
 
 data:
   raw_dir: data/raw
-  processed_dir: data/processed
+  clean_dir: data/clean
+  train_ready_dir: data/train_ready
+  clean_file: data/clean/clinical_notes_clean.parquet
+  train_ready_file: data/train_ready/clinical_text_train_ready.parquet
   dataset_name: mtsamples  # tobiasbueschel/medical-transcriptions on Kaggle
   test_size: 0.15
   val_size: 0.15
@@ -41,3 +45,12 @@ transformer:
 mlflow:
   experiment_name: clinical-text-classifier
   tracking_uri: mlruns
+
+paths:
+  models_dir: models
+  metrics_dir: artifacts/metrics
+  reports_dir: artifacts/reports
+
+runtime:
+  environment: dev
+  log_level: INFO

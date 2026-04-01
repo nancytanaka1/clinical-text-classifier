@@ -5,8 +5,27 @@ bundle:
 include:
   - configs/*.yml
 
+artifacts:
+  wheel:
+    type: whl
+    build: python -m pip install build && python -m build --wheel
+
 workspace:
   auth_type: azure-cli
+
+variables:
+  node_type:
+    default: Standard_D4ds_v4
+  autotermination_minutes:
+    default: 15
+  max_workers:
+    default: 0
+  data_path:
+    default: /Volumes/dev/clinical_nlp/raw/mtsamples.csv
+  experiment_name:
+    default: /Users/${workspace.current_user.userName}/clinical-text-dev
+  log_level:
+    default: INFO
 
 resources:
   jobs:
@@ -18,41 +37,78 @@ resources:
             notebook_path: ./notebooks/01_eda.py
           new_cluster:
             spark_version: "17.3.x-ml-scala2.13"
-            node_type_id: Standard_D4ds_v4
-            num_workers: 0
+            node_type_id: ${var.node_type}
+            num_workers: ${var.max_workers}
             spark_conf:
               spark.master: "local[*]"
               spark.databricks.cluster.profile: singleNode
             custom_tags:
               ResourceClass: SingleNode
+            autotermination_minutes: ${var.autotermination_minutes}
+
+    prepare_data_job:
+      name: "[${bundle.target}] Clinical Text Prepare Data"
+      tasks:
+        - task_key: prepare_data
+          python_wheel_task:
+            package_name: clinical-text-classifier
+            entry_point: clinical-prepare-data
+            named_parameters:
+              config: configs/config.yaml
+          libraries:
+            - whl: ./dist/*.whl
+          new_cluster:
+            spark_version: "17.3.x-ml-scala2.13"
+            node_type_id: ${var.node_type}
+            num_workers: ${var.max_workers}
+            spark_conf:
+              spark.master: "local[*]"
+              spark.databricks.cluster.profile: singleNode
+            custom_tags:
+              ResourceClass: SingleNode
+            autotermination_minutes: ${var.autotermination_minutes}
 
     training_job:
       name: "[${bundle.target}] Clinical Text Training"
       tasks:
-        - task_key: preprocess
-          notebook_task:
-            notebook_path: ./notebooks/02_preprocessing.py
-        - task_key: train
-          depends_on:
-            - task_key: preprocess
-          notebook_task:
-            notebook_path: ./notebooks/03_train.py
+        - task_key: train_baseline
+          python_wheel_task:
+            package_name: clinical-text-classifier
+            entry_point: clinical-train-baseline
+            named_parameters:
+              config: configs/config.yaml
+          libraries:
+            - whl: ./dist/*.whl
           new_cluster:
             spark_version: "17.3.x-ml-scala2.13"
-            node_type_id: Standard_D4ds_v4
-            num_workers: 0
+            node_type_id: ${var.node_type}
+            num_workers: ${var.max_workers}
             spark_conf:
               spark.master: "local[*]"
               spark.databricks.cluster.profile: singleNode
             custom_tags:
               ResourceClass: SingleNode
+            autotermination_minutes: ${var.autotermination_minutes}
 
     test_job:
       name: "[${bundle.target}] Clinical Text Tests"
       tasks:
-        - task_key: unit_tests
-          notebook_task:
-            notebook_path: ./tests/run_tests.py
+        - task_key: smoke_test
+          python_wheel_task:
+            package_name: clinical-text-classifier
+            entry_point: clinical-smoke-test
+          libraries:
+            - whl: ./dist/*.whl
+          new_cluster:
+            spark_version: "17.3.x-ml-scala2.13"
+            node_type_id: ${var.node_type}
+            num_workers: ${var.max_workers}
+            spark_conf:
+              spark.master: "local[*]"
+              spark.databricks.cluster.profile: singleNode
+            custom_tags:
+              ResourceClass: SingleNode
+            autotermination_minutes: ${var.autotermination_minutes}
 
 targets:
   dev:
