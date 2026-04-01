@@ -4,6 +4,11 @@ resources:
     eda_job:
       schedule:
         pause_status: PAUSED
+    prepare_data_job:
+      schedule:
+        quartz_cron_expression: "0 0 0 * * ?"
+        timezone_id: America/Los_Angeles
+        pause_status: UNPAUSED
     training_job:
       schedule:
         quartz_cron_expression: "0 0 2 * * ?"
