@@ -24,6 +24,8 @@ variables:
     default: /Volumes/dev/clinical_nlp/raw/mtsamples.csv
   clean_output_path:
     default: /Workspace/Repos/nguyenn.mail@gmail.com/clinical-text-classifier/data/clean/clinical_notes_clean.parquet
+  train_ready_output_path:
+    default: /Workspace/Repos/nguyenn.mail@gmail.com/clinical-text-classifier/data/train_ready/clinical_text_train_ready.parquet
   experiment_name:
     default: /Users/${workspace.current_user.userName}/clinical-text-dev
   log_level:
@@ -64,6 +66,25 @@ resources:
               config_path: configs/config.yaml
               input_path: ${var.data_path}
               output_path: ${var.clean_output_path}
+          new_cluster:
+            spark_version: "17.3.x-cpu-ml-scala2.13"
+            node_type_id: ${var.node_type}
+            num_workers: ${var.max_workers}
+            spark_conf:
+              spark.master: "local[*]"
+              spark.databricks.cluster.profile: singleNode
+            custom_tags:
+              ResourceClass: SingleNode
+            autotermination_minutes: ${var.autotermination_minutes}
+        - task_key: create_train_ready_dataset
+          depends_on:
+            - task_key: create_clean_dataset
+          notebook_task:
+            notebook_path: ./notebooks/03_create_train_ready_dataset.py
+            base_parameters:
+              config_path: configs/config.yaml
+              input_path: ${var.clean_output_path}
+              output_path: ${var.train_ready_output_path}
           new_cluster:
             spark_version: "17.3.x-cpu-ml-scala2.13"
             node_type_id: ${var.node_type}
