@@ -1,4 +1,4 @@
-﻿# Databricks Asset Bundle (DAB) configuration
+# Databricks Asset Bundle (DAB) configuration
 bundle:
   name: clinical-text-classifier
 
@@ -22,10 +22,20 @@ variables:
     default: 0
   data_path:
     default: /Volumes/dev/clinical_nlp/raw/mtsamples.csv
+  config_path:
+    default: /Workspace/Users/${workspace.current_user.userName}/.bundle/clinical-text-classifier/${bundle.target}/files/configs/config.yaml
+  clean_output_path:
+    default: /dbfs/FileStore/clinical_text/clean/clinical_notes_clean.parquet
+  train_ready_output_path:
+    default: /dbfs/FileStore/clinical_text/train_ready/clinical_text_train_ready.parquet
   experiment_name:
     default: /Users/${workspace.current_user.userName}/clinical-text-dev
   log_level:
     default: INFO
+  unity_catalog:
+    default: dev
+  schema:
+    default: clinical_nlp
 
 resources:
   jobs:
@@ -35,8 +45,10 @@ resources:
         - task_key: run_eda
           notebook_task:
             notebook_path: ./notebooks/01_eda.py
+            base_parameters:
+              data_path: ${var.data_path}
           new_cluster:
-            spark_version: "17.3.x-ml-scala2.13"
+            spark_version: "17.3.x-cpu-ml-scala2.13"
             node_type_id: ${var.node_type}
             num_workers: ${var.max_workers}
             spark_conf:
@@ -49,16 +61,34 @@ resources:
     prepare_data_job:
       name: "[${bundle.target}] Clinical Text Prepare Data"
       tasks:
-        - task_key: prepare_data
-          python_wheel_task:
-            package_name: clinical-text-classifier
-            entry_point: clinical-prepare-data
-            named_parameters:
-              config: configs/config.yaml
-          libraries:
-            - whl: ./dist/*.whl
+        - task_key: create_clean_dataset
+          notebook_task:
+            notebook_path: ./notebooks/02_create_clean_dataset.py
+            base_parameters:
+              config_path: ${var.config_path}
+              input_path: ${var.data_path}
+              output_path: ${var.clean_output_path}
           new_cluster:
-            spark_version: "17.3.x-ml-scala2.13"
+            spark_version: "17.3.x-cpu-ml-scala2.13"
+            node_type_id: ${var.node_type}
+            num_workers: ${var.max_workers}
+            spark_conf:
+              spark.master: "local[*]"
+              spark.databricks.cluster.profile: singleNode
+            custom_tags:
+              ResourceClass: SingleNode
+            autotermination_minutes: ${var.autotermination_minutes}
+        - task_key: create_train_ready_dataset
+          depends_on:
+            - task_key: create_clean_dataset
+          notebook_task:
+            notebook_path: ./notebooks/03_create_train_ready_dataset.py
+            base_parameters:
+              config_path: ${var.config_path}
+              input_path: ${var.clean_output_path}
+              output_path: ${var.train_ready_output_path}
+          new_cluster:
+            spark_version: "17.3.x-cpu-ml-scala2.13"
             node_type_id: ${var.node_type}
             num_workers: ${var.max_workers}
             spark_conf:
@@ -80,7 +110,7 @@ resources:
           libraries:
             - whl: ./dist/*.whl
           new_cluster:
-            spark_version: "17.3.x-ml-scala2.13"
+            spark_version: "17.3.x-cpu-ml-scala2.13"
             node_type_id: ${var.node_type}
             num_workers: ${var.max_workers}
             spark_conf:
@@ -100,7 +130,7 @@ resources:
           libraries:
             - whl: ./dist/*.whl
           new_cluster:
-            spark_version: "17.3.x-ml-scala2.13"
+            spark_version: "17.3.x-cpu-ml-scala2.13"
             node_type_id: ${var.node_type}
             num_workers: ${var.max_workers}
             spark_conf:
@@ -115,9 +145,9 @@ targets:
     mode: development
     default: true
     workspace:
-      host: https://adb-7405604639205301.1.azuredatabricks.net
+      host: https://adb-7405614872200827.7.azuredatabricks.net
     variables:
-      data_path: /Volumes/dev/clinical_nlp/raw/mtsamples.csv
+      data_path: /dbfs/FileStore/tables/mtsamples.csv
       experiment_name: /Users/${workspace.current_user.userName}/clinical-text-dev
       log_level: DEBUG
 
@@ -140,3 +170,4 @@ targets:
       data_path: /Volumes/prod/clinical_nlp/raw/mtsamples.csv
       experiment_name: /Shared/clinical-text-prod
       log_level: WARNING
+

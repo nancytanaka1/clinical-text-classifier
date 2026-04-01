@@ -24,6 +24,8 @@
 import warnings
 warnings.filterwarnings("ignore")
 
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -52,6 +54,14 @@ sns.set_theme(style="whitegrid", palette="viridis")
 
 print("Environment ready.")
 
+
+def show(obj):
+    """Display helper that works in Databricks and plain Python."""
+    if "display" in globals():
+        display(obj)
+    else:
+        print(obj)
+
 # COMMAND ----------
 
 # MAGIC %md
@@ -66,10 +76,25 @@ print("Environment ready.")
 # COMMAND ----------
 
 # DBTITLE 1,Configuration — UPDATE THIS PATH
-DATA_PATH = "/Workspace/Repos/nancytanaka1/clinical-text-classifier/data/raw/mtsamples.csv"
+DEFAULT_DATA_PATHS = [
+    "/dbfs/FileStore/tables/mtsamples.csv",
+    "/Workspace/Repos/nguyenn.mail@gmail.com/clinical-text-classifier/data/raw/mtsamples.csv",
+    "/Workspace/Repos/nancytanaka1/clinical-text-classifier/data/raw/mtsamples.csv",
+]
 
-# Fallback: uncomment if using DBFS
-# DATA_PATH = "/dbfs/FileStore/tables/mtsamples.csv"
+try:
+    dbutils.widgets.text("data_path", "")
+    widget_data_path = dbutils.widgets.get("data_path").strip()
+except NameError:
+    widget_data_path = ""
+
+if widget_data_path:
+    DATA_PATH = widget_data_path
+else:
+    existing_default = next((path for path in DEFAULT_DATA_PATHS if Path(path).exists()), None)
+    DATA_PATH = existing_default or DEFAULT_DATA_PATHS[0]
+
+print(f"Using DATA_PATH={DATA_PATH}")
 
 # COMMAND ----------
 
@@ -92,7 +117,7 @@ missing = df.isnull().sum()
 missing_pct = (missing / len(df) * 100).round(2)
 quality = pd.DataFrame({"missing_count": missing, "missing_pct": missing_pct})
 quality = quality[quality.missing_count > 0].sort_values("missing_pct", ascending=False)
-display(quality)
+show(quality)
 
 print(f"\n=== Duplicates ===")
 n_dupes = df.duplicated(subset=["transcription"]).sum()
@@ -123,7 +148,7 @@ if "n" not in specialty_counts.columns:
 specialty_counts["pct"] = (specialty_counts["n"] / specialty_counts["n"].sum() * 100).round(2)
 specialty_counts["cumulative_pct"] = specialty_counts["pct"].cumsum().round(2)
 
-display(specialty_counts)
+show(specialty_counts)
 
 # COMMAND ----------
 
@@ -215,7 +240,7 @@ stats = df["transcription"].apply(compute_text_stats).apply(pd.Series)
 df = pd.concat([df, stats], axis=1)
 
 print("=== Text Length Statistics ===")
-display(df[["char_len", "word_count", "sentence_count", "avg_word_len"]].describe().round(1))
+show(df[["char_len", "word_count", "sentence_count", "avg_word_len"]].describe().round(1))
 
 # COMMAND ----------
 
@@ -284,26 +309,32 @@ def get_top_tfidf_terms(
         min_df=3,
         max_df=0.85,
     )
-    tfidf_matrix = tfidf.fit_transform(df[text_col].fillna(""))
+    text_series = df[text_col].fillna("").astype(str)
+    label_series = df[label_col]
+
+    tfidf_matrix = tfidf.fit_transform(text_series)
     feature_names = tfidf.get_feature_names_out()
 
     results = []
-    for label in df[label_col].unique():
-        mask = df[label_col] == label
-        class_tfidf = tfidf_matrix[mask].mean(axis=0).A1
+    for label in label_series.dropna().unique():
+        mask = (label_series == label).to_numpy()
+        if mask.sum() == 0:
+            continue
+
+        class_tfidf = np.asarray(tfidf_matrix[mask].mean(axis=0)).ravel()
         top_indices = class_tfidf.argsort()[-top_n:][::-1]
-        for rank, idx in enumerate(top_indices, 1):
+        for rank, idx in enumerate(top_indices, start=1):
             results.append({
                 "specialty": label,
                 "rank": rank,
                 "term": feature_names[idx],
-                "tfidf_score": round(class_tfidf[idx], 4),
+                "tfidf_score": round(float(class_tfidf[idx]), 4),
             })
     return pd.DataFrame(results)
 
 
 tfidf_top = get_top_tfidf_terms(df)
-display(tfidf_top.head(30))
+show(tfidf_top.head(30))
 
 # COMMAND ----------
 
@@ -475,7 +506,7 @@ readability = df["transcription"].apply(compute_readability).apply(pd.Series)
 df = pd.concat([df, readability], axis=1)
 
 print("=== Readability Score Summary ===")
-display(df[["flesch_reading_ease", "flesch_kincaid_grade", "gunning_fog", "coleman_liau"]].describe().round(2))
+show(df[["flesch_reading_ease", "flesch_kincaid_grade", "gunning_fog", "coleman_liau"]].describe().round(2))
 
 # COMMAND ----------
 
