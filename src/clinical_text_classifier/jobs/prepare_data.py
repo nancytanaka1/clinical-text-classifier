@@ -8,7 +8,12 @@ import logging
 import pandas as pd
 
 from clinical_text_classifier.config import load_config
-from clinical_text_classifier.data import create_splits, clean_dataset, ensure_dataset, save_splits
+from clinical_text_classifier.data import (
+    clean_dataset,
+    create_splits,
+    ensure_dataset,
+    save_splits,
+)
 from clinical_text_classifier.logging_utils import configure_logging
 
 LOGGER = logging.getLogger(__name__)
@@ -38,7 +43,11 @@ def run(config_path: str) -> None:
     )
     outputs = save_splits(data_cfg["processed_dir"], train_df, val_df, test_df)
 
-    LOGGER.info("Prepared dataset with %s rows across %s classes", len(clean_df), clean_df["medical_specialty"].nunique())
+    LOGGER.info(
+        "Prepared dataset with %s rows across %s classes",
+        len(clean_df),
+        clean_df["medical_specialty"].nunique(),
+    )
     for split_name, path in outputs.items():
         LOGGER.info("Saved %s split to %s", split_name, path)
 
