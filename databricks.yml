@@ -1,4 +1,4 @@
-﻿# Databricks Asset Bundle (DAB) configuration
+# Databricks Asset Bundle (DAB) configuration
 bundle:
   name: clinical-text-classifier
 
@@ -143,9 +143,9 @@ targets:
     mode: development
     default: true
     workspace:
-      host: https://adb-7405610551965161.1.azuredatabricks.net
+      host: https://adb-7405614872200827.7.azuredatabricks.net
     variables:
-      data_path: /Volumes/dev/clinical_nlp/raw/mtsamples.csv
+      data_path: /dbfs/FileStore/tables/mtsamples.csv
       experiment_name: /Users/${workspace.current_user.userName}/clinical-text-dev
       log_level: DEBUG
 
@@ -168,3 +168,4 @@ targets:
       data_path: /Volumes/prod/clinical_nlp/raw/mtsamples.csv
       experiment_name: /Shared/clinical-text-prod
       log_level: WARNING
+
