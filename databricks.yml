@@ -107,6 +107,7 @@ resources:
             entry_point: clinical-train-baseline
             named_parameters:
               config: configs/config.yaml
+              train-ready-path: ${var.train_ready_output_path}
           libraries:
             - whl: ./dist/*.whl
           new_cluster:
