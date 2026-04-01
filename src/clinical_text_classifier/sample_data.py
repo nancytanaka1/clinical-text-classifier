@@ -8,23 +8,30 @@ import pandas as pd
 
 SAMPLES = [
     (
-        "The patient is a 45-year-old male with right knee pain after a fall. MRI shows a torn anterior cruciate ligament and arthroscopic reconstruction is recommended.",
+        "The patient is a 45-year-old male with right knee pain after a fall. "
+        "MRI shows a torn anterior cruciate ligament and arthroscopic "
+        "reconstruction is recommended.",
         "Orthopedic",
     ),
     (
-        "A 68-year-old male presents with chest pain and shortness of breath. EKG shows inferior ST elevation and emergent catheterization is planned.",
+        "A 68-year-old male presents with chest pain and shortness of breath. "
+        "EKG shows inferior ST elevation and emergent catheterization is planned.",
         "Cardiovascular / Pulmonary",
     ),
     (
-        "A 52-year-old male presents with epigastric pain and melena. Endoscopy reveals a duodenal ulcer and proton pump inhibitor therapy is started.",
+        "A 52-year-old male presents with epigastric pain and melena. Endoscopy "
+        "reveals a duodenal ulcer and proton pump inhibitor therapy is started.",
         "Gastroenterology",
     ),
     (
-        "A 73-year-old female presents with acute right-sided weakness and aphasia. Imaging is concerning for left MCA occlusion and stroke treatment is initiated.",
+        "A 73-year-old female presents with acute right-sided weakness and "
+        "aphasia. Imaging is concerning for left MCA occlusion and stroke "
+        "treatment is initiated.",
         "Neurology",
     ),
     (
-        "A 58-year-old male presents for annual follow-up with hypertension, diabetes, and hyperlipidemia requiring medication adjustment.",
+        "A 58-year-old male presents for annual follow-up with hypertension, "
+        "diabetes, and hyperlipidemia requiring medication adjustment.",
         "General Medicine",
     ),
 ]

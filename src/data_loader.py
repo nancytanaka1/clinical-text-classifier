@@ -7,7 +7,6 @@ for multi-label specialty classification.
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 import yaml
@@ -30,7 +29,7 @@ def load_config(config_path: str = "configs/config.yaml") -> dict:
     Returns:
         Dictionary containing project configuration.
     """
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         return yaml.safe_load(f)
 
 
@@ -164,7 +163,7 @@ def create_splits(
 
 
 def prepare_dataset(
-    config: Optional[dict] = None, force_download: bool = False
+    config: dict | None = None, force_download: bool = False
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """End-to-end pipeline: download, clean, split, and save.
 
