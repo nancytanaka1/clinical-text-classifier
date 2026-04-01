@@ -6,7 +6,10 @@ project:
 
 data:
   raw_dir: data/raw
-  processed_dir: data/processed
+  clean_dir: data/clean
+  train_ready_dir: data/train_ready
+  clean_file: data/clean/clinical_notes_clean.parquet
+  train_ready_file: data/train_ready/clinical_text_train_ready.parquet
   dataset_name: mtsamples  # tobiasbueschel/medical-transcriptions on Kaggle
   test_size: 0.15
   val_size: 0.15
