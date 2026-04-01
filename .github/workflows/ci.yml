@@ -1,0 +1,89 @@
+﻿name: CI/CD — Clinical Text Classifier
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install ruff pytest pytest-cov
+      - name: Lint with ruff
+        run: ruff check src/ tests/ notebooks/ --output-format=github
+      - name: Run unit tests
+        run: pytest tests/ -v --tb=short --cov=src --cov-report=term-missing
+
+  validate-bundle:
+    name: Validate Bundle
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+      - name: Validate bundle (dev)
+        run: databricks bundle validate -t dev
+      - name: Validate bundle (prod)
+        run: databricks bundle validate -t prod
+
+  deploy-dev:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    needs: validate-bundle
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_SP_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-secret: ${{ secrets.AZURE_SP_CLIENT_SECRET }}
+      - name: Deploy bundle to dev
+        run: databricks bundle deploy -t dev
+      - name: Run test job on dev
+        run: databricks bundle run -t dev test_job
+
+  deploy-prod:
+    name: Deploy to Prod
+    runs-on: ubuntu-latest
+    needs: validate-bundle
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_SP_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-secret: ${{ secrets.AZURE_SP_CLIENT_SECRET }}
+      - name: Deploy bundle to prod
+        run: databricks bundle deploy -t prod
+      - name: Verify deployment
+        run: databricks bundle summary -t prod

@@ -1,0 +1,19 @@
+﻿# configs/dev.yml — Development environment overrides
+resources:
+  jobs:
+    eda_job:
+      schedule:
+        pause_status: PAUSED
+    training_job:
+      schedule:
+        pause_status: PAUSED
+    test_job:
+      schedule:
+        pause_status: PAUSED
+
+variables:
+  node_type: Standard_D4ds_v4
+  autotermination_minutes: 15
+  max_workers: 0
+  unity_catalog: dev
+  schema: clinical_nlp
