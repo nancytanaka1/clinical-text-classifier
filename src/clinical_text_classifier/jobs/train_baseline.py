@@ -15,12 +15,12 @@ from clinical_text_classifier.logging_utils import configure_logging
 LOGGER = logging.getLogger(__name__)
 
 
-def run(config_path: str) -> None:
+def run(config_path: str, train_ready_path_override: str | None = None) -> None:
     """Train the baseline model from the train-ready dataset."""
     config = load_config(config_path)
     configure_logging(config.get("runtime", {}).get("log_level", "INFO"))
 
-    train_ready_path = Path(config["data"]["train_ready_file"])
+    train_ready_path = Path(train_ready_path_override or config["data"]["train_ready_file"])
     train_ready_df = pd.read_parquet(train_ready_path)
 
     required_columns = {"text", "label", "split"}
@@ -55,8 +55,9 @@ def main() -> None:
     """CLI wrapper."""
     parser = argparse.ArgumentParser(description="Train the baseline clinical text model.")
     parser.add_argument("--config", default="configs/config.yaml")
+    parser.add_argument("--train-ready-path", default=None)
     args = parser.parse_args()
-    run(args.config)
+    run(args.config, train_ready_path_override=args.train_ready_path)
 
 
 if __name__ == "__main__":
