@@ -26,6 +26,10 @@ variables:
     default: /Users/${workspace.current_user.userName}/clinical-text-dev
   log_level:
     default: INFO
+  unity_catalog:
+    default: dev
+  schema:
+    default: clinical_nlp
 
 resources:
   jobs:
@@ -35,8 +39,10 @@ resources:
         - task_key: run_eda
           notebook_task:
             notebook_path: ./notebooks/01_eda.py
+            base_parameters:
+              data_path: ${var.data_path}
           new_cluster:
-            spark_version: "17.3.x-ml-scala2.13"
+            spark_version: "17.3.x-cpu-ml-scala2.13"
             node_type_id: ${var.node_type}
             num_workers: ${var.max_workers}
             spark_conf:
@@ -58,7 +64,7 @@ resources:
           libraries:
             - whl: ./dist/*.whl
           new_cluster:
-            spark_version: "17.3.x-ml-scala2.13"
+            spark_version: "17.3.x-cpu-ml-scala2.13"
             node_type_id: ${var.node_type}
             num_workers: ${var.max_workers}
             spark_conf:
@@ -80,7 +86,7 @@ resources:
           libraries:
             - whl: ./dist/*.whl
           new_cluster:
-            spark_version: "17.3.x-ml-scala2.13"
+            spark_version: "17.3.x-cpu-ml-scala2.13"
             node_type_id: ${var.node_type}
             num_workers: ${var.max_workers}
             spark_conf:
@@ -100,7 +106,7 @@ resources:
           libraries:
             - whl: ./dist/*.whl
           new_cluster:
-            spark_version: "17.3.x-ml-scala2.13"
+            spark_version: "17.3.x-cpu-ml-scala2.13"
             node_type_id: ${var.node_type}
             num_workers: ${var.max_workers}
             spark_conf:
@@ -115,7 +121,7 @@ targets:
     mode: development
     default: true
     workspace:
-      host: https://adb-7405604639205301.1.azuredatabricks.net
+      host: https://adb-7405610551965161.1.azuredatabricks.net
     variables:
       data_path: /Volumes/dev/clinical_nlp/raw/mtsamples.csv
       experiment_name: /Users/${workspace.current_user.userName}/clinical-text-dev
