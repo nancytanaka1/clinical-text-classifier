@@ -106,7 +106,7 @@ resources:
             package_name: clinical-text-classifier
             entry_point: clinical-train-baseline
             named_parameters:
-              config: configs/config.yaml
+              config: ${var.config_path}
               train-ready-path: ${var.train_ready_output_path}
           libraries:
             - whl: ./dist/*.whl
@@ -128,6 +128,8 @@ resources:
           python_wheel_task:
             package_name: clinical-text-classifier
             entry_point: clinical-smoke-test
+            named_parameters:
+              config: ${var.config_path}
           libraries:
             - whl: ./dist/*.whl
           new_cluster:
